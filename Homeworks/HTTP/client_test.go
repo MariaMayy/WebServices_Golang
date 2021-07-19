@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -76,6 +77,30 @@ func TestBadToken(t *testing.T) {
 	if err == nil {
 		t.Errorf("Empty error, bro")
 	} else if err.Error() != "Bad AccessToken" {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
+
+func TestUnpackFail(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Some Error", http.StatusBadRequest)
+		}))
+	defer ts.Close()
+	sClient := SearchClient{AccessToken, ts.URL}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if !strings.Contains(err.Error(), "cant unpack error json") {
 		t.Errorf("Invalid error: %v", err.Error())
 	}
 
