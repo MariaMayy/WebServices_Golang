@@ -85,7 +85,7 @@ func TestBadToken(t *testing.T) {
 func TestUnpackFail(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "Some Error", http.StatusBadRequest)
+			http.Error(w, "Wow, error, bro:c", http.StatusBadRequest)
 		}))
 	defer ts.Close()
 	sClient := SearchClient{AccessToken, ts.URL}
