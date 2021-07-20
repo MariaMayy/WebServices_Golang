@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // тут писать код тестов
@@ -168,6 +169,73 @@ func TestUnknownError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Empty error, bro")
 	} else if !strings.Contains(err.Error(), "unknown bad request error:") {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
+
+func TestTimeoutError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(2 * time.Second)
+		}))
+	defer ts.Close()
+	sClient := SearchClient{AccessToken, ts.URL}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if !strings.Contains(err.Error(), "timeout for") {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
+
+func TestUnknownErr(t *testing.T) {
+	sClient := SearchClient{AccessToken, "BAD"}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if !strings.Contains(err.Error(), "unknown error") {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
+
+func TestFatalError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Wow, fatal error!", http.StatusInternalServerError)
+		}))
+	defer ts.Close()
+	sClient := SearchClient{AccessToken, ts.URL}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if err.Error() != "SearchServer fatal error" {
 		t.Errorf("Invalid error: %v", err.Error())
 	}
 
