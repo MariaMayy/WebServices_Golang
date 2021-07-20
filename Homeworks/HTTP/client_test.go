@@ -105,3 +105,70 @@ func TestUnpackFail(t *testing.T) {
 	}
 
 }
+
+func TestOffsetFailDown(t *testing.T) {
+	ts := startTServer(AccessToken)
+	defer ts.Close()
+
+	sc := SearchRequest{
+		Limit:      8,
+		Offset:     -5,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := ts.search.FindUsers(sc)
+	if err == nil {
+		t.Error("offset must be > 0")
+	} else if err.Error() != "offset must be > 0" {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+}
+
+func TestBadOrderField(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			SendErr(w, ErrorBadOrderField, http.StatusBadRequest)
+		}))
+	defer ts.Close()
+	sClient := SearchClient{AccessToken, ts.URL}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "Bad",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if !strings.Contains(err.Error(), "OrderFeld Bad invalid") {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
+
+func TestUnknownError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			SendErr(w, "Unknown error((", http.StatusBadRequest)
+		}))
+	defer ts.Close()
+	sClient := SearchClient{AccessToken, ts.URL}
+
+	sc := SearchRequest{
+		Limit:      5,
+		Offset:     1,
+		Query:      "",
+		OrderField: "",
+		OrderBy:    OrderByAsc,
+	}
+	_, err := sClient.FindUsers(sc)
+	if err == nil {
+		t.Errorf("Empty error, bro")
+	} else if !strings.Contains(err.Error(), "unknown bad request error:") {
+		t.Errorf("Invalid error: %v", err.Error())
+	}
+
+}
