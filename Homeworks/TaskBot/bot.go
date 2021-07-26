@@ -8,14 +8,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
 
 type Task struct {
-	Name   string
-	User   string
-	Assign string
+	Name   string // задача
+	User   string // автор задачи
+	Assign string // логин, на кого назначена задача
 }
 
 var (
@@ -26,12 +27,34 @@ var (
 	WebhookURL                 = "https://525f2cb5.ngrok.io"
 	Users      map[string]int  = make(map[string]int)
 	TaskList   map[string]Task = make(map[string]Task)
+
+	iCount = 1
 )
 
 // выводит список всех активных задач
 func GetTasks(author string) string {
 	var Result string
 
+	if len(TaskList) == 0 {
+		Result = "Нет задач"
+	} else {
+		for i := 1; i <= iCount; i++ {
+			curTask, bOK := TaskList[i]
+			if bOK != false { // если ключ существует в карте
+				Result = strconv.Itoa(i) + ". " + curTask.Name + " by @" + curTask.User
+			}
+			switch curTask.Assign {
+			case author:
+				Result += "\nassignee: я" + "\n/unassign_" + strconv.Itoa(i) + " /resolve_" + strconv.Itoa(i)
+			case "":
+				Result += "\nassign_" + strconv.Itoa(i)
+			default:
+				Result += "\nassignee: @" + curTask.Assign
+			}
+		}
+	}
+
+	return Result
 }
 
 func startTaskBot(ctx context.Context) error {
