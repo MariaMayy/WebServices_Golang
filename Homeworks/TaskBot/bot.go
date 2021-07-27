@@ -114,6 +114,59 @@ func UnassignTask(user string, index int) (string, string) {
 
 }
 
+// /resolve_$ID - выполняет задачу, удаляет её из списка
+func DoTask(user string, index int) string {
+	var Result string
+	curTask, bOK := TaskList[index]
+	if bOK == false {
+		Result = "Задачи не существует:с"
+		return Result
+	}
+	// если задачу выполнил другой человек
+	if curTask.User != user {
+		Result = "Задача \"" + curTask.Name + "\"" + "выполнена @" + user
+	} else {
+		// выполнена автором
+		Result = "Задача \"" + curTask.Name + "\"" + "выполнена"
+	}
+	delete(TaskList, index)
+	return Result
+}
+
+// /my - показывает задачи, которые назначены на меня
+func MyTask(user string) string {
+	var Result string
+	if len(TaskList) == 0 {
+		return "Нет задач"
+	}
+
+	for index, curTask := range TaskList {
+		if curTask.Assign == user {
+			Result += strconv.Itoa(index) + ". " + curTask.Name + " by @" + curTask.User +
+				"\nunassign_" + strconv.Itoa(index) + " /resolve_" + strconv.Itoa(index)
+		}
+	}
+
+	return Result
+}
+
+// /owner - показывает задачи,которые были созданы пользователем
+func OtherTask(user string) string {
+	var Result string
+	if len(TaskList) == 0 {
+		return "Нет задач"
+	}
+
+	for index, curTask := range TaskList {
+		if curTask.User == user {
+			Result += strconv.Itoa(index) + ". " + curTask.Name + " by @" + curTask.User +
+				"\nassign_" + strconv.Itoa(index)
+		}
+	}
+
+	return Result
+}
+
 func startTaskBot(ctx context.Context) error {
 	// инициализация BotAPI
 	bot, err := tgbotapi.NewBotAPI(BotToken)
@@ -136,7 +189,7 @@ func startTaskBot(ctx context.Context) error {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8585"
+		port = "8081"
 	}
 	go func() {
 		log.Fatalln("http err: ", http.ListenAndServe(":"+port, nil))
