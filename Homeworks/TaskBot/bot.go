@@ -76,6 +76,23 @@ func CreateTask(author string, TName string) string {
 	return "Задача \"" + TName + "\"" + "создана, id=" + strconv.Itoa(iCount-1)
 }
 
+// /assign_$ID - делаеть пользователя исполнителем задачи
+func DoAssign(user string, index int) (string, string) {
+	var first, second string
+	curTask, bOK := TaskList[index]
+	if bOK == false {
+		first = "Задачи не существует:с"
+		return first, second
+	}
+	curTask.Assign = user
+	first = "Задача \"" + curTask.Name + "\"" + " назначена на вас"
+	if curTask.User != user {
+		first = "Задача \"" + curTask.Name + "\"" + " назначена на @" + user
+	}
+
+	return first, second
+}
+
 func startTaskBot(ctx context.Context) error {
 	// инициализация BotAPI
 	bot, err := tgbotapi.NewBotAPI(BotToken)
