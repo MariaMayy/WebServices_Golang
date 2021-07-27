@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
@@ -24,9 +25,9 @@ var (
 	BotToken = "1911432734:AAHx58EmDiONrkjWH_gGW-kErlLRwmWpBKo"
 
 	// урл выдаст вам игрок или хероку
-	WebhookURL                = "https://525f2cb5.ngrok.io"
-	Users      map[string]int = make(map[string]int)
-	TaskList   map[int]Task   = make(map[int]Task)
+	WebhookURL                  = "https://525f2cb5.ngrok.io"
+	Users      map[string]int64 = make(map[string]int64)
+	TaskList   map[int]Task     = make(map[int]Task)
 
 	iCount = 1
 )
@@ -195,6 +196,42 @@ func startTaskBot(ctx context.Context) error {
 		log.Fatalln("http err: ", http.ListenAndServe(":"+port, nil))
 	}()
 	fmt.Println("Start listen :" + port)
+
+	// получаем все обновления из канала updates
+	for update := range updates {
+		UserName := update.Message.From.UserName
+		ChatID := update.Message.Chat.ID
+		MessageText := update.Message.Text
+		Users[UserName] = ChatID
+
+		cmd := strings.Split(MessageText, " ") // считываем всю команду
+		MainCmd := strings.Split(cmd[0], "_")
+
+		switch cmd[0] {
+		case "/tasks":
+			NewMessage := tgbotapi.NewMessage(ChatID, GetTasks(UserName))
+			bot.Send(NewMessage)
+		case "/new":
+			NewMessage := tgbotapi.NewMessage(ChatID, CreateTask(UserName, MessageText[5:]))
+			bot.Send(NewMessage)
+		case "/my":
+			NewMessage := tgbotapi.NewMessage(ChatID, MyTask(UserName))
+			bot.Send(NewMessage)
+		case "/owner":
+			NewMessage := tgbotapi.NewMessage(ChatID, OtherTask(UserName))
+			bot.Send(NewMessage)
+		default:
+			switch MainCmd[0] {
+			case "/assign":
+				ind, _ := strconv.Atoi(MainCmd[1]) // индекс
+
+			case "/unassign":
+
+			case "/resolve":
+
+			}
+		}
+	}
 
 	return nil
 }
