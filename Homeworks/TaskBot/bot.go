@@ -93,6 +93,27 @@ func DoAssign(user string, index int) (string, string) {
 	return first, second
 }
 
+// /unassign_$ID - снимает задачу с текущего исполнителя
+func UnassignTask(user string, index int) (string, string) {
+	var first, second string
+	curTask, bOK := TaskList[index]
+	if bOK == false {
+		first = "Задачи не существует:с"
+		return first, second
+	}
+
+	if curTask.Assign != user {
+		first = "Задача не на вас"
+		return first, second
+	} else {
+		first = "Принято"
+		second = "Задача \"" + curTask.Name + "\"" + "осталась без исполнителя"
+		curTask.Assign = ""
+		return first, second
+	}
+
+}
+
 func startTaskBot(ctx context.Context) error {
 	// инициализация BotAPI
 	bot, err := tgbotapi.NewBotAPI(BotToken)
