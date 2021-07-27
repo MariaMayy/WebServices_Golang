@@ -57,6 +57,25 @@ func GetTasks(author string) string {
 	return Result
 }
 
+// /new XXX YYY ZZZ - создаёт новую задачу
+func CreateTask(author string, TName string) string {
+	var NewTask Task
+	if len(TaskList) != 0 {
+		for i := 1; i <= iCount; i++ {
+			if TName == TaskList[i].Name {
+				return "Задача была создана ранее"
+			}
+		}
+	}
+
+	NewTask.Name = TName
+	NewTask.User = author
+	TaskList[iCount] = NewTask
+	iCount++ // увеличиваем количество задач
+
+	return "Задача \"" + TName + "\"" + "создана, id=" + strconv.Itoa(iCount-1)
+}
+
 func startTaskBot(ctx context.Context) error {
 	// инициализация BotAPI
 	bot, err := tgbotapi.NewBotAPI(BotToken)
