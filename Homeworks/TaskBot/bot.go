@@ -25,7 +25,7 @@ var (
 	BotToken = "1911432734:AAHx58EmDiONrkjWH_gGW-kErlLRwmWpBKo"
 
 	// урл выдаст вам игрок или хероку
-	WebhookURL                  = "https://525f2cb5.ngrok.io"
+	WebhookURL                  = " http://8da3e1a9c640.ngrok.io"
 	Users      map[string]int64 = make(map[string]int64)
 	TaskList   map[int]Task     = make(map[int]Task)
 
@@ -77,7 +77,7 @@ func CreateTask(author string, TName string) string {
 	return "Задача \"" + TName + "\"" + "создана, id=" + strconv.Itoa(iCount-1)
 }
 
-// /assign_$ID - делаеть пользователя исполнителем задачи
+// /assign_$ID - делает пользователя исполнителем задачи
 func DoAssign(user string, index int) (string, string) {
 	var first, second string
 	curTask, bOK := TaskList[index]
@@ -223,12 +223,58 @@ func startTaskBot(ctx context.Context) error {
 		default:
 			switch MainCmd[0] {
 			case "/assign":
+				var tmp int64
+				var first, second string
+				ind, _ := strconv.Atoi(MainCmd[1]) // индекс
+				// есть исполнитель
+				if TaskList[ind].Assign != "" {
+					tmp = Users[TaskList[ind].Assign] // ChatID
+				} else {
+					// нет исполнителя
+					tmp = Users[TaskList[ind].User] // ChatID
+				}
+				first, second = DoAssign(UserName, ind)
+				NewMessage := tgbotapi.NewMessage(ChatID, first)
+				bot.Send(NewMessage)
+
+				// если пользователь не автор задачи, посылаем сообщение о том,
+				// что задача назначена на пользователя
+				if TaskList[ind].User != UserName {
+					NewMessage := tgbotapi.NewMessage(tmp, second)
+					bot.Send(NewMessage)
+				}
+			case "/unassign":
+				var tmp int64
+				var first, second string
 				ind, _ := strconv.Atoi(MainCmd[1]) // индекс
 
-			case "/unassign":
+				first, second = UnassignTask(UserName, ind)
+				NewMessage := tgbotapi.NewMessage(ChatID, first)
+				bot.Send(NewMessage)
 
+				// если нет исполнителя
+				if TaskList[ind].Assign == "" {
+					tmp = Users[TaskList[ind].User] // ChatID
+					NewMessage := tgbotapi.NewMessage(tmp, second)
+					bot.Send(NewMessage)
+				}
 			case "/resolve":
+				var tmp int64
+				var first string
+				ind, _ := strconv.Atoi(MainCmd[1]) // индекс
 
+				first = DoTask(UserName, ind)
+				NewMessage := tgbotapi.NewMessage(ChatID, first)
+				bot.Send(NewMessage)
+
+				// если пользователь не автор задачи, то отправляем сообщение,
+				// что задача принадлежит @Name
+				if TaskList[ind].User != UserName {
+					tmp = Users[TaskList[ind].User] // ChatID
+					Msg := first + " @" + TaskList[ind].Assign
+					NewMessage := tgbotapi.NewMessage(tmp, Msg)
+					bot.Send(NewMessage)
+				}
 			}
 		}
 	}
