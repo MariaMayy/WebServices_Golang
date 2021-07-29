@@ -22,7 +22,7 @@ type Task struct {
 
 var (
 	// @BotFather в телеграме даст вам это
-	BotToken = "1911432734:AAHx58EmDiONrkjWH_gGW-kErlLRwmWpBKo"
+	BotToken = ""
 
 	// урл выдаст вам игрок или хероку
 	WebhookURL                  = " http://8da3e1a9c640.ngrok.io"
