@@ -25,7 +25,7 @@ var (
 	BotToken = ""
 
 	// урл выдаст вам игрок или хероку
-	WebhookURL                  = " http://8da3e1a9c640.ngrok.io"
+	WebhookURL                  = ""
 	Users      map[string]int64 = make(map[string]int64)
 	TaskList   map[int]Task     = make(map[int]Task)
 
